@@ -38,7 +38,8 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
             .ok_or_else(|| anyhow!("pricing program not fetched"))?;
 
         let (input_lst_state, input_lst_data) = self.find_ready_lst(*input_mint)?;
-        if U8Bool(input_lst_state.is_input_disabled).is_true() {
+        if !cfg!(feature = "permissionless") && U8Bool(input_lst_state.is_input_disabled).is_true()
+        {
             return Err(SControllerError::LstInputDisabled.into());
         }
         let (pool_state, _input_lst_state, _input_reserves_balance) =
@@ -47,7 +48,11 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
         let (pool_state, _output_lst_state, output_reserves_balance) =
             apply_sync_sol_value(pool_state, output_lst_state, output_lst_data)?;
 
-        let out_sol_value = output_lst_data.sol_val_calc.lst_to_sol(*amount)?.get_max();
+        let gross_out = output_lst_data.gross_transfer(*amount)?;
+        let out_sol_value = output_lst_data
+            .sol_val_calc
+            .lst_to_sol(gross_out)?
+            .get_max();
         if out_sol_value == 0 {
             return Err(SControllerError::ZeroValue.into());
         }
@@ -57,7 +62,7 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
                 output_lst_mint: *output_mint,
             },
             &PriceExactOutIxArgs {
-                amount: *amount,
+                amount: gross_out,
                 sol_value: out_sol_value,
             },
         )?;
@@ -68,16 +73,17 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
             .sol_val_calc
             .sol_to_lst(in_sol_value)?
             .get_max();
+        let src_lst_in = input_lst_data.gross_transfer(src_lst_in)?;
         if src_lst_in == 0 {
             return Err(SControllerError::ZeroValue.into());
         }
         let to_protocol_fees_lst_amount = calc_swap_protocol_fees(CalcSwapProtocolFeesArgs {
             in_sol_value,
             out_sol_value,
-            dst_lst_out: *amount,
+            dst_lst_out: gross_out,
             trading_protocol_fee_bps: pool_state.trading_protocol_fee_bps,
         })?;
-        let total_dst_lst_out = amount
+        let total_dst_lst_out = gross_out
             .checked_add(to_protocol_fees_lst_amount)
             .ok_or(SControllerError::MathError)?;
         if total_dst_lst_out > output_reserves_balance {

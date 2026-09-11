@@ -6,3 +6,6 @@ pub mod entrypoint;
 pub mod list_account;
 pub mod processor;
 pub mod verify;
+
+#[cfg(feature = "permissionless")]
+pub mod permissionless;

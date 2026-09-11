@@ -1,3 +1,4 @@
+// Modified by eat.ag: LP shares are priced on net deposits, never withheld fees.
 use s_controller_interface::{
     add_liquidity_verify_account_keys, add_liquidity_verify_account_privileges,
     AddLiquidityAccounts, AddLiquidityIxArgs, SControllerError, ADD_LIQUIDITY_IX_ACCOUNTS_LEN,
@@ -12,9 +13,10 @@ use s_controller_lib::{
 use sanctum_misc_utils::{
     load_accounts, log_and_return_acc_privilege_err, log_and_return_wrong_acc_err,
 };
+use sanctum_token_lib::token_account_balance;
 use sanctum_token_lib::{
-    mint_supply, mint_to_invoke_signed, transfer_checked_decimal_agnostic_invoke, MintToAccounts,
-    TransferCheckedAccounts,
+    mint_supply, mint_to_invoke_signed, transfer_checked_decimal_agnostic_invoke,
+    transfer_checked_decimal_agnostic_invoke_signed, MintToAccounts, TransferCheckedAccounts,
 };
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
@@ -51,6 +53,20 @@ pub fn process_add_liquidity(accounts: &[AccountInfo], args: AddLiquidityIxArgs)
 
     let start_total_sol_value = accounts.pool_state.total_sol_value()?;
 
+    let reserves_before = token_account_balance(accounts.pool_reserves)?;
+    transfer_checked_decimal_agnostic_invoke(
+        TransferCheckedAccounts {
+            from: accounts.src_lst_acc,
+            to: accounts.pool_reserves,
+            token_program: accounts.lst_token_program,
+            authority: accounts.signer,
+            mint: accounts.lst_mint,
+        },
+        lst_amount,
+    )?;
+    let lst_amount = token_account_balance(accounts.pool_reserves)?
+        .checked_sub(reserves_before)
+        .ok_or(SControllerError::MathError)?;
     let lst_amount_sol_value = lst_cpi.invoke_lst_to_sol(lst_amount)?.get_min();
     let lst_amount_sol_value_after_fees =
         pricing_cpi.invoke_price_lp_tokens_to_mint(PricingProgramIxArgs {
@@ -90,25 +106,16 @@ pub fn process_add_liquidity(accounts: &[AccountInfo], args: AddLiquidityIxArgs)
         return Err(SControllerError::SlippageToleranceExceeded.into());
     }
 
-    transfer_checked_decimal_agnostic_invoke(
+    transfer_checked_decimal_agnostic_invoke_signed(
         TransferCheckedAccounts {
-            from: accounts.src_lst_acc,
-            to: accounts.pool_reserves,
-            token_program: accounts.lst_token_program,
-            authority: accounts.signer,
-            mint: accounts.lst_mint,
-        },
-        to_reserves_lst_amount,
-    )?;
-    transfer_checked_decimal_agnostic_invoke(
-        TransferCheckedAccounts {
-            from: accounts.src_lst_acc,
+            from: accounts.pool_reserves,
             to: accounts.protocol_fee_accumulator,
             token_program: accounts.lst_token_program,
-            authority: accounts.signer,
+            authority: accounts.pool_state,
             mint: accounts.lst_mint,
         },
         to_protocol_fees_lst_amount,
+        &[&[POOL_STATE_SEED, &[POOL_STATE_BUMP]]],
     )?;
     mint_to_invoke_signed(
         MintToAccounts {

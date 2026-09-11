@@ -16,6 +16,7 @@ pub fn apply_sync_sol_value(
         sol_val_calc,
         reserves_balance,
         token_program: _,
+        ..
     }: &LstData,
 ) -> anyhow::Result<(PoolState, LstState, u64)> {
     let reserves_balance = *reserves_balance

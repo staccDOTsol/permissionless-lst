@@ -65,9 +65,9 @@ dependencies = [
 
 [[package]]
 name = "ahash"
-version = "0.7.7"
+version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a824f2aa7e75a0c98c5a504fceb80649e9c35265d44525b5f94de4771a395cd"
+checksum = "891477e0c6a8957309ee5c45a6368af3ae14bb510732d2684ffa19af310920f9"
 dependencies = [
  "getrandom 0.2.11",
  "once_cell",
@@ -76,9 +76,9 @@ dependencies = [
 
 [[package]]
 name = "ahash"
-version = "0.8.4"
+version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72832d73be48bac96a5d7944568f305d829ed55b0ce3b483647089dfaf6cf704"
+checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
 dependencies = [
  "cfg-if",
  "getrandom 0.2.11",
@@ -2003,7 +2003,7 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 dependencies = [
- "ahash 0.7.7",
+ "ahash 0.7.8",
 ]
 
 [[package]]
@@ -2012,7 +2012,7 @@ version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 dependencies = [
- "ahash 0.7.7",
+ "ahash 0.7.8",
 ]
 
 [[package]]
@@ -2021,7 +2021,7 @@ version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
- "ahash 0.8.4",
+ "ahash 0.8.11",
 ]
 
 [[package]]
@@ -3993,6 +3993,7 @@ dependencies = [
  "sanctum-system-program-lib",
  "sanctum-token-lib",
  "sanctum-token-ratio",
+ "sol-value-calculator-lib",
  "sol_value_calculator_interface",
  "solana-program",
  "solana-program-test",
@@ -4138,6 +4139,7 @@ dependencies = [
  "s_controller_interface",
  "sanctum-associated-token-lib",
  "sanctum-lst-list",
+ "sanctum-s-common",
  "sanctum-solana-test-utils",
  "sanctum-token-lib",
  "sanctum-token-ratio",
@@ -5139,7 +5141,7 @@ version = "1.17.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06e33cbcaa4fb22729560b1f5078d809a81a7d54e8b4a0d8c0484cc419d1fc2f"
 dependencies = [
- "ahash 0.8.4",
+ "ahash 0.8.11",
  "blake3",
  "block-buffer 0.10.4",
  "bs58",
@@ -5252,7 +5254,7 @@ version = "1.17.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ba6b7178ef92f0778e6a83b3df7478c2988c193d3086666fd0dcc6686cc3202"
 dependencies = [
- "ahash 0.8.4",
+ "ahash 0.8.11",
  "bincode",
  "bv",
  "caps",
@@ -7597,18 +7599,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.7.26"
+version = "0.7.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e97e415490559a91254a2979b4829267a57d2fcd741a98eee8b722fb57289aa0"
+checksum = "1b9b4fd18abc82b8136838da5d50bae7bdea537c574d8dc1a34ed098d6c166f0"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.7.26"
+version = "0.7.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd7e48ccf166952882ca8bd778a43502c64f33bf94c12ebe2a7f08e5a0f6689f"
+checksum = "fa4f8080344d4671fb4e831a13ad1e68092748387dfc4f55e356242fae12ce3e"
 dependencies = [
  "proc-macro2",
  "quote",

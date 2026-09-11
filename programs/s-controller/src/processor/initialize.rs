@@ -54,7 +54,11 @@ pub fn process_initialize(accounts: &[AccountInfo]) -> ProgramResult {
             admin: *accounts.authority.key,
             rebalance_authority: *accounts.authority.key,
             protocol_fee_beneficiary: *accounts.authority.key,
-            pricing_program: DEFAULT_PRICING_PROGRAM,
+            pricing_program: if cfg!(feature = "permissionless") {
+                solana_program::pubkey!("NoFEEPR1C1NGPRoGRAM111111111111111111111111")
+            } else {
+                DEFAULT_PRICING_PROGRAM
+            },
             lp_token_mint: *accounts.lp_token_mint.key,
         };
     }

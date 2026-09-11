@@ -16,7 +16,8 @@ pub use traits::*;
 
 #[derive(Clone, Debug)]
 pub enum KnownPricingProg {
-    FlatFee(FlatFeePricingProg), // only variant for now
+    FlatFee(FlatFeePricingProg),
+    BuiltinNoFee, // eat.ag permissionless controller; no CPI or mutable fee table
 }
 
 impl MutablePricingProg for KnownPricingProg {
@@ -28,18 +29,23 @@ impl MutablePricingProg for KnownPricingProg {
             flat_fee_lib::program::ID => {
                 Self::FlatFee(FlatFeePricingProg::try_new(program_id, mints)?)
             }
+            x if x == solana_program::pubkey!("NoFEEPR1C1NGPRoGRAM111111111111111111111111") => {
+                Self::BuiltinNoFee
+            }
             _ => Err(PricingProgErr::UnknownPricingProg)?,
         })
     }
 
     fn get_accounts_to_update_for_all_lsts(&self) -> Vec<Pubkey> {
         match self {
+            Self::BuiltinNoFee => Vec::new(),
             Self::FlatFee(p) => p.get_accounts_to_update_for_all_lsts(),
         }
     }
 
     fn get_accounts_to_update_for_liquidity(&self) -> Vec<Pubkey> {
         match self {
+            Self::BuiltinNoFee => Vec::new(),
             Self::FlatFee(p) => p.get_accounts_to_update_for_liquidity(),
         }
     }
@@ -49,6 +55,7 @@ impl MutablePricingProg for KnownPricingProg {
         lst_mints: I,
     ) -> Vec<Pubkey> {
         match self {
+            Self::BuiltinNoFee => Vec::new(),
             Self::FlatFee(p) => p.get_accounts_to_update_for_lsts(lst_mints),
         }
     }
@@ -58,6 +65,7 @@ impl MutablePricingProg for KnownPricingProg {
         account_map: &HashMap<Pubkey, D>,
     ) -> anyhow::Result<()> {
         match self {
+            Self::BuiltinNoFee => Ok(()),
             Self::FlatFee(p) => p.update(account_map),
         }
     }
@@ -66,6 +74,9 @@ impl MutablePricingProg for KnownPricingProg {
 impl PricingProg for KnownPricingProg {
     fn pricing_program_id(&self) -> Pubkey {
         match self {
+            Self::BuiltinNoFee => {
+                solana_program::pubkey!("NoFEEPR1C1NGPRoGRAM111111111111111111111111")
+            }
             Self::FlatFee(p) => p.pricing_program_id(),
         }
     }
@@ -76,6 +87,7 @@ impl PricingProg for KnownPricingProg {
         args: &PriceLpTokensToRedeemIxArgs,
     ) -> anyhow::Result<u64> {
         match self {
+            Self::BuiltinNoFee => Ok(args.sol_value),
             Self::FlatFee(p) => p.quote_lp_tokens_to_redeem(output_lst_mint, args),
         }
     }
@@ -85,6 +97,7 @@ impl PricingProg for KnownPricingProg {
         output_lst_mint: Pubkey,
     ) -> anyhow::Result<Vec<AccountMeta>> {
         match self {
+            Self::BuiltinNoFee => Ok(vec![AccountMeta::new_readonly(output_lst_mint, false)]),
             Self::FlatFee(p) => p.price_lp_tokens_to_redeem_accounts(output_lst_mint),
         }
     }
@@ -95,6 +108,7 @@ impl PricingProg for KnownPricingProg {
         args: &PriceLpTokensToMintIxArgs,
     ) -> anyhow::Result<u64> {
         match self {
+            Self::BuiltinNoFee => Ok(args.sol_value),
             Self::FlatFee(p) => p.quote_lp_tokens_to_mint(input_lst_mint, args),
         }
     }
@@ -104,6 +118,7 @@ impl PricingProg for KnownPricingProg {
         input_lst_mint: Pubkey,
     ) -> anyhow::Result<Vec<AccountMeta>> {
         match self {
+            Self::BuiltinNoFee => Ok(vec![AccountMeta::new_readonly(input_lst_mint, false)]),
             Self::FlatFee(p) => p.price_lp_tokens_to_mint_accounts(input_lst_mint),
         }
     }
@@ -114,12 +129,17 @@ impl PricingProg for KnownPricingProg {
         args: &PriceExactInIxArgs,
     ) -> anyhow::Result<u64> {
         match self {
+            Self::BuiltinNoFee => Ok(args.sol_value),
             Self::FlatFee(p) => p.quote_exact_in(keys, args),
         }
     }
 
     fn price_exact_in_accounts(&self, keys: PriceExactInKeys) -> anyhow::Result<Vec<AccountMeta>> {
         match self {
+            Self::BuiltinNoFee => Ok(vec![
+                AccountMeta::new_readonly(keys.input_lst_mint, false),
+                AccountMeta::new_readonly(keys.output_lst_mint, false),
+            ]),
             Self::FlatFee(p) => p.price_exact_in_accounts(keys),
         }
     }
@@ -130,6 +150,7 @@ impl PricingProg for KnownPricingProg {
         args: &PriceExactOutIxArgs,
     ) -> anyhow::Result<u64> {
         match self {
+            Self::BuiltinNoFee => Ok(args.sol_value),
             Self::FlatFee(p) => p.quote_exact_out(keys, args),
         }
     }
@@ -139,6 +160,10 @@ impl PricingProg for KnownPricingProg {
         keys: PriceExactOutKeys,
     ) -> anyhow::Result<Vec<AccountMeta>> {
         match self {
+            Self::BuiltinNoFee => Ok(vec![
+                AccountMeta::new_readonly(keys.input_lst_mint, false),
+                AccountMeta::new_readonly(keys.output_lst_mint, false),
+            ]),
             Self::FlatFee(p) => p.price_exact_out_accounts(keys),
         }
     }

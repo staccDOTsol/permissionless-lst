@@ -24,6 +24,9 @@ pub struct LstData {
     pub sol_val_calc: KnownLstSolValCalc,
     pub reserves_balance: Option<u64>,
     pub token_program: Pubkey,
+    /// Cached mint bytes, supplied through update; quote never performs network calls.
+    pub mint_data: Option<Vec<u8>>,
+    pub current_epoch: std::sync::Arc<std::sync::atomic::AtomicU64>,
 }
 
 /// Convenience type alias for jupiter
@@ -121,5 +124,34 @@ impl<S, L: ReadonlyAccountData> SPool<S, L> {
             .ok_or_else(|| anyhow!("LST {lst_mint} not supported"))?;
         // need to copy lst_state out due to lifetime of lst_state_list_account_data
         Ok((*lst_state, lst_data))
+    }
+}
+
+impl LstData {
+    pub fn net_transfer(&self, amount: u64) -> anyhow::Result<u64> {
+        let data = self
+            .mint_data
+            .as_deref()
+            .ok_or_else(|| anyhow!("Mint data not fetched"))?;
+        Ok(sanctum_s_common::token::net_transfer_amount_from_data(
+            &self.token_program,
+            data,
+            self.current_epoch
+                .load(std::sync::atomic::Ordering::Relaxed),
+            amount,
+        )?)
+    }
+    pub fn gross_transfer(&self, amount: u64) -> anyhow::Result<u64> {
+        let data = self
+            .mint_data
+            .as_deref()
+            .ok_or_else(|| anyhow!("Mint data not fetched"))?;
+        Ok(sanctum_s_common::token::gross_transfer_amount_from_data(
+            &self.token_program,
+            data,
+            self.current_epoch
+                .load(std::sync::atomic::Ordering::Relaxed),
+            amount,
+        )?)
     }
 }

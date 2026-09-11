@@ -20,7 +20,29 @@ pub fn process_instruction(
         return Err(ProgramError::IncorrectProgramId);
     }
 
+    // eat.ag extension: keep upstream discriminators intact.
+    if instruction_data == [23] {
+        return process_create_fee_account(program_id, accounts);
+    }
     let ix = SControllerProgramIx::deserialize(instruction_data)?;
+    #[cfg(feature = "permissionless")]
+    if matches!(
+        ix,
+        SControllerProgramIx::DisableLstInput(_)
+            | SControllerProgramIx::EnableLstInput(_)
+            | SControllerProgramIx::SetSolValueCalculator(_)
+            | SControllerProgramIx::SetPricingProgram
+            | SControllerProgramIx::AddDisablePoolAuthority
+            | SControllerProgramIx::RemoveDisablePoolAuthority(_)
+            | SControllerProgramIx::DisablePool
+            | SControllerProgramIx::EnablePool
+            | SControllerProgramIx::StartRebalance(_)
+            | SControllerProgramIx::EndRebalance
+            | SControllerProgramIx::SetRebalanceAuthority
+            | SControllerProgramIx::RemoveLst(_)
+    ) {
+        return Err(ProgramError::InvalidInstructionData);
+    }
     solana_program::msg!("{:?}", ix);
 
     let res = match ix {

@@ -35,6 +35,7 @@ pub fn try_lst_data(
         token_program,
         ..
     } = lst_list.iter().find(|s| s.mint == *mint)?;
+    let epoch = Arc::clone(&shared_current_epoch);
     let calc = match pool {
         PoolInfo::Lido => KnownLstSolValCalc::Lido(LidoLstSolValCalc::new(shared_current_epoch)),
         PoolInfo::Marinade => KnownLstSolValCalc::Marinade(MarinadeLstSolValCalc::default()),
@@ -75,6 +76,8 @@ pub fn try_lst_data(
             sol_val_calc: calc,
             reserves_balance: None,
             token_program: *token_program,
+            mint_data: None,
+            current_epoch: epoch,
         })
     }
 }

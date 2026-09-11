@@ -4,6 +4,7 @@ version = "0.2.0"
 edition = "2021"
 
 [dependencies]
+sanctum-s-common = { workspace = true }
 anyhow = { workspace = true }
 flat_fee_interface = { workspace = true }
 jupiter-amm-interface = { workspace = true }
@@ -38,3 +39,6 @@ solana-program-test = { workspace = true }
 spl-token = { workspace = true }
 test-utils = { workspace = true }
 tokio = { workspace = true }
+
+[features]
+permissionless = ["s-controller-lib/permissionless"]

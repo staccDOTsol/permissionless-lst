@@ -45,3 +45,7 @@ pub use swap_exact_in::*;
 pub use swap_exact_out::*;
 pub use sync_sol_value::*;
 pub use withdraw_protocol_fees::*;
+
+// eat.ag fork: public, Token-2022-aware fee-account initialization.
+mod create_fee_account;
+pub use create_fee_account::*;

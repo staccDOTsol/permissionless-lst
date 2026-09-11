@@ -41,18 +41,20 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
             .ok_or_else(|| anyhow!("LP mint not fetched"))?;
 
         let (input_lst_state, input_lst_data) = self.find_ready_lst(*input_mint)?;
-        if U8Bool(input_lst_state.is_input_disabled).is_true() {
+        if !cfg!(feature = "permissionless") && U8Bool(input_lst_state.is_input_disabled).is_true()
+        {
             return Err(SControllerError::LstInputDisabled.into());
         }
         let (pool_state, _input_lst_state, _input_reserves_balance) =
             apply_sync_sol_value(*pool_state, input_lst_state, input_lst_data)?;
 
-        let lst_amount_sol_value = input_lst_data.sol_val_calc.lst_to_sol(*amount)?.get_min();
+        let net_in = input_lst_data.net_transfer(*amount)?;
+        let lst_amount_sol_value = input_lst_data.sol_val_calc.lst_to_sol(net_in)?.get_min();
 
         let lst_amount_sol_value_after_fees = pricing_prog.quote_lp_tokens_to_mint(
             *input_mint,
             &PriceLpTokensToMintIxArgs {
-                amount: *amount,
+                amount: net_in,
                 sol_value: lst_amount_sol_value,
             },
         )?;

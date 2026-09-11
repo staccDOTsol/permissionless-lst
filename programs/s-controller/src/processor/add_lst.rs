@@ -1,6 +1,8 @@
+// Modified by eat.ag: feature-gated public listing with onchain backing proof.
+#[cfg(not(feature = "permissionless"))]
+use s_controller_interface::add_lst_verify_account_privileges;
 use s_controller_interface::{
-    add_lst_verify_account_keys, add_lst_verify_account_privileges, AddLstAccounts, LstState,
-    SControllerError,
+    add_lst_verify_account_keys, AddLstAccounts, LstState, SControllerError,
 };
 use s_controller_lib::{
     program::{LST_STATE_LIST_BUMP, LST_STATE_LIST_SEED},
@@ -114,9 +116,25 @@ fn verify_add_lst<'a, 'info>(
     let (expected, bumps) = free_args.resolve()?;
 
     add_lst_verify_account_keys(actual, expected).map_err(log_and_return_wrong_acc_err)?;
+    #[cfg(not(feature = "permissionless"))]
     add_lst_verify_account_privileges(actual).map_err(log_and_return_acc_privilege_err)?;
+    #[cfg(feature = "permissionless")]
+    {
+        s_controller_interface::add_lst_verify_writable_privileges(actual)
+            .map_err(log_and_return_acc_privilege_err)?;
+        if !actual.payer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+        // Any payer can list; executable calculator selection must still be justified by backing.
+        crate::permissionless::verify_backing(
+            actual.lst_mint,
+            actual.sol_value_calculator,
+            accounts.get(s_controller_interface::ADD_LST_IX_ACCOUNTS_LEN),
+        )?;
+    }
 
     verify_tokenkeg_or_22_mint(actual.lst_mint)?;
+    #[cfg(not(feature = "permissionless"))]
     verify_sol_value_calculator_is_program(actual.sol_value_calculator)?;
 
     let pool_state_bytes = actual.pool_state.try_borrow_data()?;

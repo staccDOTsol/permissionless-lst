@@ -306,7 +306,7 @@ impl TryFrom<KnownPricingProg> for FlatFeePricingProg {
         match value {
             KnownPricingProg::FlatFee(f) => Ok(f),
             // TODO: uncomment when we add more variants
-            // _ => Err(PricingProgErr::WrongPricingProg),
+            _ => Err(PricingProgErr::WrongPricingProg),
         }
     }
 }

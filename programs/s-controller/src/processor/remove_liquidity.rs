@@ -1,3 +1,4 @@
+// Modified by eat.ag: net receipt controls redemption slippage.
 use s_controller_interface::{
     remove_liquidity_verify_account_keys, remove_liquidity_verify_account_privileges,
     RemoveLiquidityAccounts, RemoveLiquidityIxArgs, SControllerError,
@@ -12,6 +13,7 @@ use s_controller_lib::{
 use sanctum_misc_utils::{
     load_accounts, log_and_return_acc_privilege_err, log_and_return_wrong_acc_err,
 };
+use sanctum_s_common::token::net_transfer_amount;
 use sanctum_token_lib::{
     burn_invoke, mint_supply, transfer_checked_decimal_agnostic_invoke_signed, BurnAccounts,
     TransferCheckedAccounts,
@@ -81,7 +83,7 @@ pub fn process_remove_liquidity(
     if to_user_lst_amount == 0 {
         return Err(SControllerError::ZeroValue.into());
     }
-    if to_user_lst_amount < min_lst_out {
+    if net_transfer_amount(accounts.lst_mint, to_user_lst_amount)? < min_lst_out {
         return Err(SControllerError::SlippageToleranceExceeded.into());
     }
 

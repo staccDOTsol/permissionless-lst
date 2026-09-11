@@ -1,3 +1,4 @@
+// Modified by eat.ag: transfer-fee-aware amounts and net-output slippage.
 use s_controller_interface::{
     swap_exact_in_verify_account_keys, swap_exact_in_verify_account_privileges, SControllerError,
     SwapExactInAccounts, SwapExactInIxArgs, SWAP_EXACT_IN_IX_ACCOUNTS_LEN,
@@ -11,6 +12,7 @@ use s_controller_lib::{
 use sanctum_misc_utils::{
     load_accounts, log_and_return_acc_privilege_err, log_and_return_wrong_acc_err,
 };
+use sanctum_s_common::token::net_transfer_amount;
 use sanctum_token_lib::{
     token_account_balance, transfer_checked_decimal_agnostic_invoke,
     transfer_checked_decimal_agnostic_invoke_signed, TransferCheckedAccounts,
@@ -58,17 +60,20 @@ pub fn process_swap_exact_in(accounts: &[AccountInfo], args: SwapExactInIxArgs) 
 
     let start_total_sol_value = accounts.pool_state.total_sol_value()?;
 
-    let in_sol_value = src_lst_cpi.invoke_lst_to_sol(amount)?.get_min();
+    let src_before = token_account_balance(accounts.src_pool_reserves)?;
+    let dst_before = token_account_balance(accounts.dst_lst_acc)?;
+    let net_in = net_transfer_amount(accounts.src_lst_mint, amount)?;
+    let in_sol_value = src_lst_cpi.invoke_lst_to_sol(net_in)?.get_min();
     if in_sol_value == 0 {
         return Err(SControllerError::ZeroValue.into());
     }
     let out_sol_value = pricing_cpi.invoke_price_exact_in(PricingProgramIxArgs {
-        amount,
+        amount: net_in,
         sol_value: in_sol_value,
     })?;
     let dst_lst_out = dst_lst_cpi.invoke_sol_to_lst(out_sol_value)?.get_min();
 
-    if dst_lst_out < min_amount_out {
+    if net_transfer_amount(accounts.dst_lst_mint, dst_lst_out)? < min_amount_out {
         return Err(SControllerError::SlippageToleranceExceeded.into());
     }
     if dst_lst_out == 0 {
@@ -126,6 +131,14 @@ pub fn process_swap_exact_in(accounts: &[AccountInfo], args: SwapExactInIxArgs) 
     sync_sol_value_unchecked(src_sync_sol_value_accounts, src_lst_cpi, src_lst_index)?;
     sync_sol_value_unchecked(dst_sync_sol_value_accounts, dst_lst_cpi, dst_lst_index)?;
 
+    if token_account_balance(accounts.src_pool_reserves)?.checked_sub(src_before) != Some(net_in)
+        || token_account_balance(accounts.dst_lst_acc)?
+            .checked_sub(dst_before)
+            .unwrap_or(0)
+            < min_amount_out
+    {
+        return Err(SControllerError::SlippageToleranceExceeded.into());
+    }
     let end_total_sol_value = accounts.pool_state.total_sol_value()?;
     if end_total_sol_value < start_total_sol_value {
         return Err(SControllerError::PoolWouldLoseSolValue.into());

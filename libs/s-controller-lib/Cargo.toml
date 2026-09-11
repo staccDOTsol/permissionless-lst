@@ -5,6 +5,7 @@ edition = "2021"
 
 [features]
 testing = []
+permissionless = ["s_controller_interface/permissionless"]
 
 [dependencies]
 borsh = { workspace = true }

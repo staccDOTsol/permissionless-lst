@@ -93,6 +93,7 @@ impl<S, L: ReadonlyAccountData> SPool<S, L> {
             None => return vec![],
         };
         let mut res = lst_data.sol_val_calc.get_accounts_to_update();
+        res.push(lst_state.mint);
         if let Ok(ata) = self.pool_reserves_account(lst_state, lst_data) {
             res.push(ata);
         }
@@ -156,6 +157,9 @@ impl<S, L: ReadonlyAccountData> SPool<S, L> {
                     Some(l) => l,
                     None => return Ok(()),
                 };
+                if let Some(mint) = account_map.get(&lst_state_list[i].mint) {
+                    ld.mint_data = Some(mint.data().to_vec());
+                }
                 let r = ld.sol_val_calc.update(account_map);
                 r.and(ata_res.map_or_else(
                     |e| Err(e.into()),

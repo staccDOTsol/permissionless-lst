@@ -1,3 +1,4 @@
+// Modified by eat.ag: exact-output means net received after Token-2022 fees.
 use s_controller_interface::{
     swap_exact_out_verify_account_keys, swap_exact_out_verify_account_privileges, SControllerError,
     SwapExactOutAccounts, SwapExactOutIxArgs, SWAP_EXACT_OUT_IX_ACCOUNTS_LEN,
@@ -11,6 +12,7 @@ use s_controller_lib::{
 use sanctum_misc_utils::{
     load_accounts, log_and_return_acc_privilege_err, log_and_return_wrong_acc_err,
 };
+use sanctum_s_common::token::gross_transfer_amount;
 use sanctum_token_lib::{
     token_account_balance, transfer_checked_decimal_agnostic_invoke,
     transfer_checked_decimal_agnostic_invoke_signed, TransferCheckedAccounts,
@@ -57,6 +59,9 @@ pub fn process_swap_exact_out(accounts: &[AccountInfo], args: SwapExactOutIxArgs
 
     let start_total_sol_value = accounts.pool_state.total_sol_value()?;
 
+    let net_out = amount;
+    let dst_before = token_account_balance(accounts.dst_lst_acc)?;
+    let amount = gross_transfer_amount(accounts.dst_lst_mint, net_out)?;
     let out_sol_value = dst_lst_cpi.invoke_lst_to_sol(amount)?.get_max();
     if out_sol_value == 0 {
         return Err(SControllerError::ZeroValue.into());
@@ -65,7 +70,8 @@ pub fn process_swap_exact_out(accounts: &[AccountInfo], args: SwapExactOutIxArgs
         amount,
         sol_value: out_sol_value,
     })?;
-    let src_lst_in = src_lst_cpi.invoke_sol_to_lst(in_sol_value)?.get_max();
+    let net_in = src_lst_cpi.invoke_sol_to_lst(in_sol_value)?.get_max();
+    let src_lst_in = gross_transfer_amount(accounts.src_lst_mint, net_in)?;
 
     if src_lst_in > max_amount_in {
         return Err(SControllerError::SlippageToleranceExceeded.into());
@@ -125,6 +131,13 @@ pub fn process_swap_exact_out(accounts: &[AccountInfo], args: SwapExactOutIxArgs
     sync_sol_value_unchecked(src_sync_sol_value_accounts, src_lst_cpi, src_lst_index)?;
     sync_sol_value_unchecked(dst_sync_sol_value_accounts, dst_lst_cpi, dst_lst_index)?;
 
+    if token_account_balance(accounts.dst_lst_acc)?
+        .checked_sub(dst_before)
+        .unwrap_or(0)
+        < net_out
+    {
+        return Err(SControllerError::SlippageToleranceExceeded.into());
+    }
     let end_total_sol_value = accounts.pool_state.total_sol_value()?;
     if end_total_sol_value < start_total_sol_value {
         return Err(SControllerError::PoolWouldLoseSolValue.into());

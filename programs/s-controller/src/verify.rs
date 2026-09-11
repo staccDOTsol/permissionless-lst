@@ -1,3 +1,4 @@
+// Modified by eat.ag: permissionless deployments have no administrative pause gates.
 //! Common verification functions used across multiple instruction processors
 
 use s_controller_interface::{LstState, PoolState, SControllerError};
@@ -24,14 +25,14 @@ pub const fn verify_not_rebalancing_and_not_disabled(
     if U8Bool(pool_state.is_rebalancing).is_true() {
         return Err(SControllerError::PoolRebalancing);
     }
-    if U8Bool(pool_state.is_disabled).is_true() {
+    if !cfg!(feature = "permissionless") && U8Bool(pool_state.is_disabled).is_true() {
         return Err(SControllerError::PoolDisabled);
     }
     Ok(())
 }
 
 pub const fn verify_lst_input_not_disabled(lst_state: &LstState) -> Result<(), SControllerError> {
-    if U8Bool(lst_state.is_input_disabled).is_true() {
+    if !cfg!(feature = "permissionless") && U8Bool(lst_state.is_input_disabled).is_true() {
         return Err(SControllerError::LstInputDisabled);
     }
     Ok(())

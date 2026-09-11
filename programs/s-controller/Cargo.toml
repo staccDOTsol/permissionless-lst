@@ -6,6 +6,7 @@ edition = "2021"
 [features]
 no-entrypoint = []
 testing = ["s-controller-lib/testing"]
+permissionless = ["s-controller-lib/permissionless"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -14,6 +15,8 @@ crate-type = ["cdylib", "lib"]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+spl-calculator-lib = { workspace = true }
+sol-value-calculator-lib = { workspace = true }
 borsh = { workspace = true }
 bytemuck = { workspace = true }
 pricing_programs_interface = { workspace = true }
@@ -31,6 +34,8 @@ spl-token = { workspace = true, features = ["no-entrypoint"] }
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
 spl-token-metadata-interface = { workspace = true }
 system_program_interface = { workspace = true }
+
+spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
 flat_fee_interface = { workspace = true }

@@ -13,7 +13,7 @@ use std::str::FromStr;
 
 use crate::SPoolJup;
 
-pub const LABEL: &str = "Sanctum Infinity";
+pub const LABEL: &str = "eat.ag permissionless LST";
 
 impl Amm for SPoolJup {
     /// Initialized by lst_state_list account, NOT pool_state.
@@ -22,7 +22,8 @@ impl Amm for SPoolJup {
     ///
     /// Must be updated 2 more times before it can be used, see docs for [`Self::from_lst_state_list_account`].
     ///
-    /// TODO: We can also repurpose params to pass in a [`SanctumLstList`] in order to allow dynamic reloading of list
+    /// Discovery may supply `{ "programId": "...", "lstList": [...] }` to include
+    /// assets outside the bundled catalog. Recreate the AMM when that catalog changes.
     fn from_keyed_account(
         KeyedAccount {
             key,
@@ -36,7 +37,9 @@ impl Amm for SPoolJup {
     where
         Self: Sized,
     {
-        let (program_id, lst_state_list_addr) = match params {
+        let catalog = params.as_ref().and_then(|v| v.get("lstList")).cloned();
+        let program_param = params.as_ref().map(|v| v.get("programId").unwrap_or(v));
+        let (program_id, lst_state_list_addr) = match program_param {
             // default to INF if program_id params not provided
             None => (
                 s_controller_lib::program::ID,
@@ -54,7 +57,10 @@ impl Amm for SPoolJup {
                 "Incorrect LST state list addr. Expected {lst_state_list_addr}. Got {key}"
             ));
         }
-        let SanctumLstList { sanctum_lst_list } = SanctumLstList::load();
+        let sanctum_lst_list = match catalog {
+            Some(value) => serde_json::from_value(value)?,
+            None => SanctumLstList::load().sanctum_lst_list,
+        };
         Self::from_lst_state_list_account(program_id, account.clone(), &sanctum_lst_list, epoch)
     }
 
@@ -80,6 +86,16 @@ impl Amm for SPoolJup {
     }
 
     fn update(&mut self, account_map: &AccountMap) -> anyhow::Result<()> {
+        use s_sol_val_calc_prog_aggregate::LstSolValCalc;
+        for lst in self.lst_data_list.iter().flatten() {
+            if let Some(mint) = account_map.get(&lst.sol_val_calc.lst_mint()) {
+                if mint.owner != lst.token_program {
+                    return Err(anyhow!(
+                        "LST mint owner differs from discovered token program"
+                    ));
+                }
+            }
+        }
         self.update_full(account_map)
     }
 

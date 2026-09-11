@@ -25,3 +25,6 @@ workspace = true
 
 [dependencies.thiserror]
 workspace = true
+
+[features]
+permissionless = []

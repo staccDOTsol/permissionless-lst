@@ -42,7 +42,8 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
             .ok_or_else(|| anyhow!("pricing program not fetched"))?;
 
         let (input_lst_state, input_lst_data) = self.find_ready_lst(*input_mint)?;
-        if U8Bool(input_lst_state.is_input_disabled).is_true() {
+        if !cfg!(feature = "permissionless") && U8Bool(input_lst_state.is_input_disabled).is_true()
+        {
             return Err(SControllerError::LstInputDisabled.into());
         }
         let (pool_state, _input_lst_state, _input_reserves_balance) =
@@ -51,7 +52,8 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
         let (pool_state, _output_lst_state, output_reserves_balance) =
             apply_sync_sol_value(pool_state, output_lst_state, output_lst_data)?;
 
-        let in_sol_value = input_lst_data.sol_val_calc.lst_to_sol(*amount)?.get_min();
+        let net_in = input_lst_data.net_transfer(*amount)?;
+        let in_sol_value = input_lst_data.sol_val_calc.lst_to_sol(net_in)?.get_min();
         if in_sol_value == 0 {
             return Err(SControllerError::ZeroValue.into());
         }
@@ -61,7 +63,7 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
                 output_lst_mint: *output_mint,
             },
             &PriceExactInIxArgs {
-                amount: *amount,
+                amount: net_in,
                 sol_value: in_sol_value,
             },
         )?;
@@ -95,7 +97,7 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
             min_in_amount: None,
             min_out_amount: None,
             in_amount: *amount,
-            out_amount: dst_lst_out,
+            out_amount: output_lst_data.net_transfer(dst_lst_out)?,
             fee_mint: *output_mint,
             fee_amount,
             fee_pct,

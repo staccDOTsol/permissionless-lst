@@ -74,6 +74,13 @@ impl<'me, 'info> PricingProgramPriceLpCpi<'me, 'info> {
         self,
         args: PricingProgramIxArgs,
     ) -> Result<u64, ProgramError> {
+        // eat.ag: immutable in-controller pricing needs no per-mint pricing registration.
+        #[cfg(feature = "permissionless")]
+        if *self.program.key
+            == solana_program::pubkey!("NoFEEPR1C1NGPRoGRAM111111111111111111111111")
+        {
+            return Ok(args.sol_value);
+        }
         let ix = self.create_price_lp_tokens_to_mint_ix(args)?;
         self.invoke_interface_ix(ix)
     }
@@ -82,6 +89,13 @@ impl<'me, 'info> PricingProgramPriceLpCpi<'me, 'info> {
         self,
         args: PricingProgramIxArgs,
     ) -> Result<u64, ProgramError> {
+        // eat.ag: immutable in-controller pricing needs no per-mint pricing registration.
+        #[cfg(feature = "permissionless")]
+        if *self.program.key
+            == solana_program::pubkey!("NoFEEPR1C1NGPRoGRAM111111111111111111111111")
+        {
+            return Ok(args.sol_value);
+        }
         let ix = self.create_price_lp_tokens_to_redeem_ix(args)?;
         self.invoke_interface_ix(ix)
     }
@@ -188,11 +202,25 @@ impl<'me, 'info> PricingProgramPriceSwapCpi<'me, 'info> {
     }
 
     pub fn invoke_price_exact_out(self, args: PricingProgramIxArgs) -> Result<u64, ProgramError> {
+        // eat.ag: immutable in-controller pricing needs no per-mint pricing registration.
+        #[cfg(feature = "permissionless")]
+        if *self.program.key
+            == solana_program::pubkey!("NoFEEPR1C1NGPRoGRAM111111111111111111111111")
+        {
+            return Ok(args.sol_value);
+        }
         let ix = self.create_price_exact_out_ix(args)?;
         self.invoke_interface_ix(ix)
     }
 
     pub fn invoke_price_exact_in(self, args: PricingProgramIxArgs) -> Result<u64, ProgramError> {
+        // eat.ag: immutable in-controller pricing needs no per-mint pricing registration.
+        #[cfg(feature = "permissionless")]
+        if *self.program.key
+            == solana_program::pubkey!("NoFEEPR1C1NGPRoGRAM111111111111111111111111")
+        {
+            return Ok(args.sol_value);
+        }
         let ix = self.create_price_exact_in_ix(args)?;
         self.invoke_interface_ix(ix)
     }

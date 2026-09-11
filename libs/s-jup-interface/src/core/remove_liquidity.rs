@@ -92,7 +92,7 @@ impl<S: ReadonlyAccountData, L: ReadonlyAccountData> SPool<S, L> {
             min_in_amount: None,
             min_out_amount: None,
             in_amount: *amount,
-            out_amount: to_user_lst_amount,
+            out_amount: output_lst_data.net_transfer(to_user_lst_amount)?,
             fee_mint: *output_mint,
             fee_amount,
             fee_pct,

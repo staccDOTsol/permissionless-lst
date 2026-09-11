@@ -4,7 +4,10 @@ pub mod initial_authority {
     #[cfg(feature = "testing")]
     sanctum_macros::declare_program_keys!("9S3avfRxH9RYbMHbvxnhwiwpdF9iuXG7uWiatqWvQskT", []);
 
-    #[cfg(not(feature = "testing"))]
+    #[cfg(all(feature = "permissionless", not(feature = "testing")))]
+    sanctum_macros::declare_program_keys!("12Nqk2jyA3XNe3rPxAaLFixytmohnMrBfCsdwrCfWNm2", []);
+
+    #[cfg(all(not(feature = "testing"), not(feature = "permissionless")))]
     sanctum_macros::declare_program_keys!("CK9cEJT7K7oRrMCcEbBQRGqHLGpxKXWnKvW7nHSDMHD1", []);
 }
 

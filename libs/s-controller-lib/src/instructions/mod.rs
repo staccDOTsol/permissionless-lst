@@ -22,3 +22,6 @@ pub use swap_exact_in::*;
 pub use swap_exact_out::*;
 pub use sync_sol_value::*;
 pub use utils::*;
+
+mod create_fee_account;
+pub use create_fee_account::*;

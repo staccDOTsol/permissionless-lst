@@ -66,13 +66,39 @@ impl<'me, 'info> SolValueCalculatorCpi<'me, 'info> {
     }
 
     pub fn invoke_sol_to_lst(self, sol_amt: u64) -> Result<U64ValueRange, ProgramError> {
-        let ix = self.create_sol_to_lst_ix(sol_amt)?;
-        self.invoke_interface_ix(ix)
+        #[cfg(feature = "permissionless")]
+        {
+            crate::permissionless::calculate_value(
+                self.lst_mint,
+                self.program,
+                self.remaining_accounts.first(),
+                sol_amt,
+                false,
+            )
+        }
+        #[cfg(not(feature = "permissionless"))]
+        {
+            let ix = self.create_sol_to_lst_ix(sol_amt)?;
+            self.invoke_interface_ix(ix)
+        }
     }
 
     pub fn invoke_lst_to_sol(self, lst_amt: u64) -> Result<U64ValueRange, ProgramError> {
-        let ix = self.create_lst_to_sol_ix(lst_amt)?;
-        self.invoke_interface_ix(ix)
+        #[cfg(feature = "permissionless")]
+        {
+            crate::permissionless::calculate_value(
+                self.lst_mint,
+                self.program,
+                self.remaining_accounts.first(),
+                lst_amt,
+                true,
+            )
+        }
+        #[cfg(not(feature = "permissionless"))]
+        {
+            let ix = self.create_lst_to_sol_ix(lst_amt)?;
+            self.invoke_interface_ix(ix)
+        }
     }
 
     fn invoke_interface_ix(self, interface_ix: Instruction) -> Result<U64ValueRange, ProgramError> {

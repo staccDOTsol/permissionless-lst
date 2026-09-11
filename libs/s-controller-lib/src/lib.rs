@@ -69,9 +69,27 @@ pub const DISABLE_POOL_AUTHORITY_LIST_PDA_SEED: &[u8] = b"disable-pool-authority
 pub const REBALANCE_RECORD_PDA_SEED: &[u8] = b"rebalance-record";
 pub const PROTOCOL_FEE_PDA_SEED: &[u8] = b"protocol-fee";
 
+#[cfg(not(feature = "permissionless"))]
 pub mod program {
     sanctum_macros::declare_program_keys!(
         "5ocnV1qiCgaQR8Jb8xWnVbApfaygJ8tNoZfgPwsgx9kx",
+        [
+            ("pool-state", b"state"),
+            ("lst-state-list", b"lst-state-list"),
+            (
+                "disable-pool-authority-list",
+                b"disable-pool-authority-list"
+            ),
+            ("rebalance-record", b"rebalance-record"),
+            ("protocol-fee", b"protocol-fee"),
+        ]
+    );
+}
+
+#[cfg(feature = "permissionless")]
+pub mod program {
+    sanctum_macros::declare_program_keys!(
+        "GSsMfxpbN3h7jwkhJkbZPErjFo22a6MAgr6npcp56KZc",
         [
             ("pool-state", b"state"),
             ("lst-state-list", b"lst-state-list"),
