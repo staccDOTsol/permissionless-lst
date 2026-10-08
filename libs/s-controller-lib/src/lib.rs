@@ -89,7 +89,7 @@ pub mod program {
 #[cfg(feature = "permissionless")]
 pub mod program {
     sanctum_macros::declare_program_keys!(
-        "GSsMfxpbN3h7jwkhJkbZPErjFo22a6MAgr6npcp56KZc",
+        "9XPcSKi9zHn2eqZGUFEDpPC5PBF1oAu3NhyzTrkoe3h3",
         [
             ("pool-state", b"state"),
             ("lst-state-list", b"lst-state-list"),

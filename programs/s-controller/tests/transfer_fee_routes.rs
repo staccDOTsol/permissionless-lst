@@ -254,7 +254,7 @@ async fn run(exact_out: bool, too_high_minimum: bool, lp_roundtrip: bool) {
             lp_suffix,
         )
         .unwrap();
-        let tx = Transaction::new_signed_with_payer(
+        let tx = engine_namespace::transaction(
             &[add],
             Some(&ctx.payer.pubkey()),
             &[&ctx.payer, &wallet],
@@ -288,7 +288,7 @@ async fn run(exact_out: bool, too_high_minimum: bool, lp_roundtrip: bool) {
             lp_suffix,
         )
         .unwrap();
-        let tx = Transaction::new_signed_with_payer(
+        let tx = engine_namespace::transaction(
             &[remove],
             Some(&ctx.payer.pubkey()),
             &[&ctx.payer, &wallet],
@@ -350,7 +350,7 @@ async fn run(exact_out: bool, too_high_minimum: bool, lp_roundtrip: bool) {
         )
         .unwrap()
     };
-    let tx = Transaction::new_signed_with_payer(
+    let tx = engine_namespace::transaction(
         &[ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &wallet],
@@ -401,3 +401,6 @@ async fn minimum_is_net_and_failed_swap_rolls_back() {
 async fn lp_roundtrip_credits_only_net_deposit_and_net_redemption() {
     run(false, false, true).await;
 }
+
+#[path = "common/engine_namespace.rs"]
+mod engine_namespace;

@@ -10,4 +10,4 @@ pub mod errors;
 pub use errors::*;
 
 #[cfg(feature = "permissionless")]
-solana_program::declare_id!("GSsMfxpbN3h7jwkhJkbZPErjFo22a6MAgr6npcp56KZc");
+solana_program::declare_id!("9XPcSKi9zHn2eqZGUFEDpPC5PBF1oAu3NhyzTrkoe3h3");

@@ -79,7 +79,7 @@ async fn run_fee_case(token_program: Pubkey, prefund: u64) {
     let mut ctx = test.start_with_context().await;
     let ix = create_fee_account_ix_for_program(ID, ctx.payer.pubkey(), mint, token_program);
     // Random fee payer, no controller admin signer or pool state.
-    let tx = Transaction::new_signed_with_payer(
+    let tx = engine_namespace::transaction(
         &[ix.clone()],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer],
@@ -95,7 +95,7 @@ async fn run_fee_case(token_program: Pubkey, prefund: u64) {
     if is22 {
         assert!(t.get_extension::<TransferFeeAmount>().is_ok());
     }
-    let tx = Transaction::new_signed_with_payer(
+    let tx = engine_namespace::transaction(
         &[ix.clone(), ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer],
@@ -106,7 +106,7 @@ async fn run_fee_case(token_program: Pubkey, prefund: u64) {
     assert_eq!(account, after);
     let mut wrong = create_fee_account_ix_for_program(ID, ctx.payer.pubkey(), mint, token_program);
     wrong.accounts[3].pubkey = Pubkey::new_unique();
-    let tx = Transaction::new_signed_with_payer(
+    let tx = engine_namespace::transaction(
         &[wrong],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer],
@@ -126,3 +126,6 @@ async fn prefunded_token22_fee_ata_is_initialized() {
 async fn legacy_fee_ata_remains_supported() {
     run_fee_case(spl_token::ID, 0).await;
 }
+
+#[path = "common/engine_namespace.rs"]
+mod engine_namespace;

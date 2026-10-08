@@ -43,7 +43,7 @@ pub fn process_instruction(
     ) {
         return Err(ProgramError::InvalidInstructionData);
     }
-    solana_program::msg!("{:?}", ix);
+    solana_program::msg!("S instruction {}", instruction_data[0]);
 
     let res = match ix {
         SControllerProgramIx::SyncSolValue(args) => process_sync_sol_value(accounts, args),
@@ -51,10 +51,14 @@ pub fn process_instruction(
         SControllerProgramIx::SwapExactOut(args) => process_swap_exact_out(accounts, args),
         SControllerProgramIx::AddLiquidity(args) => process_add_liquidity(accounts, args),
         SControllerProgramIx::RemoveLiquidity(args) => process_remove_liquidity(accounts, args),
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::DisableLstInput(args) => process_disable_lst_input(accounts, args),
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::EnableLstInput(args) => process_enable_lst_input(accounts, args),
         SControllerProgramIx::AddLst => process_add_lst(accounts),
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::RemoveLst(args) => process_remove_lst(accounts, args),
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::SetSolValueCalculator(args) => {
             process_set_sol_value_calculator(accounts, args)
         }
@@ -63,22 +67,32 @@ pub fn process_instruction(
         SControllerProgramIx::SetProtocolFeeBeneficiary => {
             process_set_protocol_fee_beneficiary(accounts)
         }
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::SetPricingProgram => process_set_pricing_program(accounts),
         SControllerProgramIx::WithdrawProtocolFees(args) => {
             process_withdraw_protocol_fees(accounts, args)
         }
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::AddDisablePoolAuthority => {
             process_add_disable_pool_authority(accounts)
         }
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::RemoveDisablePoolAuthority(args) => {
             process_remove_disable_pool_authority(accounts, args)
         }
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::DisablePool => process_disable_pool(accounts),
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::EnablePool => process_enable_pool(accounts),
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::StartRebalance(args) => process_start_rebalance(accounts, args),
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::EndRebalance => process_end_rebalance(accounts),
+        #[cfg(not(feature = "permissionless"))]
         SControllerProgramIx::SetRebalanceAuthority => process_set_rebalance_authority(accounts),
         SControllerProgramIx::Initialize => process_initialize(accounts),
+        #[cfg(feature = "permissionless")]
+        _ => Err(ProgramError::InvalidInstructionData),
     };
     if let Err(e) = res.as_ref() {
         e.print::<SControllerError>();

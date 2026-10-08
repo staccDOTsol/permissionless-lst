@@ -1099,9 +1099,13 @@
     }
   ],
   "metadata": {
-    "address": "GSsMfxpbN3h7jwkhJkbZPErjFo22a6MAgr6npcp56KZc",
+    "address": "EMd4gqQTubN5wycXoVmy9PyybXATmyYrdvsb4B5QEYvC",
     "buildFeature": "permissionless",
-    "deploymentStatus": "not-deployed",
-    "upstream": "igneous-labs/S@66de438b9e049aacc193b5795d26ac055d86d770"
+    "deploymentStatus": "built-tested-not-deployed",
+    "upstream": "igneous-labs/S@66de438b9e049aacc193b5795d26ac055d86d770",
+    "outerInstructionPrefix": [
+      37
+    ],
+    "encoding": "Prefix native instruction data with one byte 37; inner discriminants and argument layouts are unchanged."
   }
 }

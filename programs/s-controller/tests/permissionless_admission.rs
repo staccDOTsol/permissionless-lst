@@ -122,7 +122,7 @@ async fn admission(forged_pool: bool, wrong_calculator: bool, frozen_mint: bool)
     )
     .unwrap();
     assert!(!ix.accounts[0].is_signer);
-    let tx = Transaction::new_signed_with_payer(
+    let tx = engine_namespace::transaction(
         &[ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer],
@@ -178,3 +178,6 @@ async fn arbitrary_price_program_is_rejected() {
 async fn freeze_authority_cannot_enter_reserves() {
     admission(false, false, true).await;
 }
+
+#[path = "common/engine_namespace.rs"]
+mod engine_namespace;
